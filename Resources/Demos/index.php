@@ -1,8 +1,8 @@
 <?php
 
-require dirname(__DIR__) . DIRECTORY_SEPARATOR . 'bootstrap.php';
+require dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'bootstrap.php';
 
-use Regression\Regression;
+use Carbocation\StatisticsBundle\Regression\Regression;
 
 $predictors = array(
     array(0,3,4),

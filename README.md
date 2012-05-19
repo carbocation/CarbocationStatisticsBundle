@@ -14,8 +14,7 @@ This bundle is covered by the MIT license. For details,
 Symfony2 Installation
 ---------------------
 This bundle can be used as a standalone package for PHP 5.3+. It can also be used 
-as a Symfony2 bundle. 
-To do so, follow these instructions (for the 2.0.x branch):
+as a Symfony2 bundle. To do so, follow these instructions (for the 2.0.x branch):
 
 1.  Add this bundle to your `deps` file:
 

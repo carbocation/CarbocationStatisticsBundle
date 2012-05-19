@@ -26,9 +26,9 @@
  * @author shankar<nshankar@ufl.edu>
  */
 
-namespace Regression;
+namespace Carbocation\StatisticsBundle\Regression;
 
-use Regression\MatrixException;
+use Carbocation\StatisticsBundle\Regression\MatrixException;
 
 class Matrix
 {

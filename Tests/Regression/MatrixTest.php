@@ -26,10 +26,10 @@
  * 
  */
 
-namespace Tests\Regression;
+namespace Carbocation\StatisticsBundle\Tests\Regression;
 
-use Regression\Matrix;
-use Regression\MatrixException;
+use Carbocation\StatisticsBundle\RegressionMatrix;
+use Carbocation\StatisticsBundle\RegressionMatrixException;
 
 class MatrixTest extends \PHPUnit_Framework_TestCase
 {
@@ -41,7 +41,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
             array(3, 4)
         );
         $m = new Matrix($arr);
-        $this->assertInstanceOf('Regression\Matrix', $m);
+        $this->assertInstanceOf('Carbocation\StatisticsBundle\RegressionMatrix', $m);
     }
 
     /**
@@ -58,7 +58,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Regression\MatrixException
+     * @expectedException Carbocation\StatisticsBundle\RegressionMatrixException
      */
     public function testInvalidMatrixException()
     {
@@ -95,7 +95,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Regression\MatrixException
+     * @expectedException Carbocation\StatisticsBundle\RegressionMatrixException
      */
     public function testAddException()
     {
@@ -130,7 +130,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Regression\MatrixException
+     * @expectedException Carbocation\StatisticsBundle\RegressionMatrixException
      */
     public function testSubtractException()
     {
@@ -167,7 +167,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Regression\MatrixException
+     * @expectedException Carbocation\StatisticsBundle\RegressionMatrixException
      */
     public function testMultiplyException()
     {
@@ -197,7 +197,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Regression\MatrixException
+     * @expectedException Carbocation\StatisticsBundle\RegressionMatrixException
      */
     public function testDeterminantException()
     {
@@ -238,7 +238,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Regression\MatrixException
+     * @expectedException Carbocation\StatisticsBundle\RegressionMatrixException
      */
     public function testInverseException()
     {
@@ -265,7 +265,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
     }
     
     /**
-     * @expectedException Regression\MatrixException
+     * @expectedException Carbocation\StatisticsBundle\RegressionMatrixException
      */
     public function testTraceException()
     {
@@ -288,7 +288,7 @@ class MatrixTest extends \PHPUnit_Framework_TestCase
         );
         $m = new Matrix($arr);
         $n = $m->copy();
-        $this->assertInstanceOf('Regression\Matrix', $n);
+        $this->assertInstanceOf('Carbocation\StatisticsBundle\RegressionMatrix', $n);
     }
     
 }

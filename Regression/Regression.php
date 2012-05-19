@@ -29,10 +29,10 @@
  * 
  */
 
-namespace Regression;
+namespace Carbocation\StatisticsBundle\Regression;
 
-use Regression\Matrix;
-use Regression\RegressionException;
+use Carbocation\StatisticsBundle\Regression\Matrix;
+use Carbocation\StatisticsBundle\Regression\RegressionException;
 
 class Regression
 {

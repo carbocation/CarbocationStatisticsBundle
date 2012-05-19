@@ -1,5 +1,5 @@
 <?php
-namespace Regression;
+namespace Carbocation\StatisticsBundle\Regression;
 
 /**
  * Supports testing

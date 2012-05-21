@@ -44,16 +44,25 @@ class Matrix
      * 
      * Initialize the Matrix object. Throw an exception if jagged array is passed.
      *
-     * @param array $matrix - The array
+     * @param array $array - The array
      */
-    public function __construct($matrix)
+    public function __construct($array)
     {
-        $numRows = count($matrix);
-        $numCols = count($matrix[0]);
+        if(!is_array($array)){
+            throw new MatrixException('Please provide an array of arrays.');
+        }
+        
+        if(!is_array($array[0])){
+            throw new MatrixException('Please provide an array of arrays.');
+        }
+        
+        $numRows = count($array);
+        $numCols = count($array[0]);
         
         for($i = 0; $i < $numRows; $i++){
-            for($j = 0; $j < count($matrix[$i]); $j++){
-                $this->MainMatrix[$i][$j] = $matrix[$i][$j];
+            //Do this count on every row to check for jagged matrices
+            for($j = 0; $j < count($array[$i]); $j++){
+                $this->MainMatrix[$i][$j] = $array[$i][$j];
             }
         }
         $this->rows = $numRows;
@@ -185,49 +194,6 @@ class Matrix
         return $this->elementIterator($this, $matrix2, '/');
     }
     
-    protected function elementIterator(Matrix $matrix1, Matrix $matrix2, $operator)
-    {
-        $newMatrix = array();
-        $rows1 = $matrix1->rows;
-        $rows2 = $matrix2->getNumRows();
-        $columns1 = $this->columns;
-        $columns2 = $matrix2->getNumColumns();
-        
-        if(($rows1 != $rows2) || ($columns1 != $columns2)){
-            throw new MatrixException('Matrices are not the same size!');
-        }
-
-        for($i = 0; $i < $rows1; $i++){
-            for($j = 0; $j < $columns1; $j++){
-                $newMatrix[$i][$j] = $this->elementOperator(
-                        $matrix1->MainMatrix[$i][$j],
-                        $matrix2->getEntry($i, $j),
-                        $operator);
-            }
-        }
-        return new Matrix($newMatrix);
-    }
-    
-    protected function elementOperator($element1, $element2, $operator)
-    {
-        switch($operator){
-            case '*':
-                return $element1 * $element2;
-                break;
-            case '+':
-                return $element1 + $element2;
-                break;
-            case '-':
-                return $element1 - $element2;
-                break;
-            case '/':
-                return $element1 / $element2;
-                break;
-            default:
-                throw new MatrixException('Invalid elemental operator specified');
-        }
-    }
-
     /**
      * Multiply matrix2 into matrix object that calls this method
      * @param Model_Matrix $matrix2
@@ -413,6 +379,102 @@ class Matrix
         }
         
         return array_sum($this->getDiagonal());
+    }
+    
+    /**
+     * Returns a copy of the matrix with a new column added before the current 
+     * column $beforeColumn.
+     * 
+     * Number of rows in newColumn must match the number of rows in this Matrix.
+     * 
+     * @param array $newColumn
+     * @param int $beforeColumn
+     * @return \Regression\Matrix 
+     */
+    public function addColumn(array $newColumn, $beforeColumn)
+    {
+        if($this->rows != count($newColumn)){
+            throw new MatrixException('New column does not have the same number ' 
+                    . 'of rows as the current Matrix.');
+        }
+        
+        $newMatrix = array();
+        for($i = 0; $i < $this->rows; $i++){
+            $row = $this->MainMatrix[$i];
+            $part = array_splice($row, $beforeColumn, $this->columns);
+            $row = array_merge($row, (array)$newColumn[$i], $part);
+            
+            $newMatrix[] = $row;
+        }
+        
+        return new Matrix($newMatrix);
+    }
+    
+    /**
+     * Returns a copy of the matrix with a new row added before the current 
+     * row $beforeRow.
+     * 
+     * Number of columns in newRow must match the number of columns in this Matrix.
+     * 
+     * @param array $newRow
+     * @param int $beforeRow
+     * @return \Regression\Matrix 
+     */
+    public function addRow(array $newRow, $beforeRow)
+    {
+        if($this->columns != count($newRow)){
+            throw new MatrixException('New row does not have the same number ' 
+                    . 'of columns as the current Matrix.');
+        }
+        
+        $newMatrix = $this->getData();
+        $part = array_splice($newMatrix, $beforeRow, count($newMatrix));
+        $newMatrix = array_merge($newMatrix, array($newRow), $part);
+        
+        return new Matrix($newMatrix);
+    }
+    
+    protected function elementIterator(Matrix $matrix1, Matrix $matrix2, $operator)
+    {
+        $newMatrix = array();
+        $rows1 = $matrix1->rows;
+        $rows2 = $matrix2->getNumRows();
+        $columns1 = $this->columns;
+        $columns2 = $matrix2->getNumColumns();
+        
+        if(($rows1 != $rows2) || ($columns1 != $columns2)){
+            throw new MatrixException('Matrices are not the same size!');
+        }
+
+        for($i = 0; $i < $rows1; $i++){
+            for($j = 0; $j < $columns1; $j++){
+                $newMatrix[$i][$j] = $this->elementOperator(
+                        $matrix1->MainMatrix[$i][$j],
+                        $matrix2->getEntry($i, $j),
+                        $operator);
+            }
+        }
+        return new Matrix($newMatrix);
+    }
+    
+    protected function elementOperator($element1, $element2, $operator)
+    {
+        switch($operator){
+            case '*':
+                return $element1 * $element2;
+                break;
+            case '+':
+                return $element1 + $element2;
+                break;
+            case '-':
+                return $element1 - $element2;
+                break;
+            case '/':
+                return $element1 / $element2;
+                break;
+            default:
+                throw new MatrixException('Invalid elemental operator specified');
+        }
     }
     
     /**

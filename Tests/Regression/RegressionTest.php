@@ -29,7 +29,9 @@
 namespace Carbocation\StatisticsBundle\Tests\Regression;
 
 use Carbocation\StatisticsBundle\Regression\CsvImport;
+use Carbocation\StatisticsBundle\Regression\Matrix;
 use Carbocation\StatisticsBundle\Regression\Regression;
+use Carbocation\StatisticsBundle\Regression\RegressionException;
 
 class RegressionTest extends \PHPUnit_Framework_TestCase
 {
@@ -42,11 +44,31 @@ class RegressionTest extends \PHPUnit_Framework_TestCase
         /* @var $reg Regression */
         $reg = new Regression();
         $inputs = CsvImport::loadCsv(__DIR__ . DIRECTORY_SEPARATOR . 'MyReg.csv', array(0), array(1, 2, 3));
-        $reg->setX($inputs['x']);
-        $reg->setY($inputs['y']);
+        $reg->setX(new Matrix($inputs['x']));
+        $reg->setY(new Matrix($inputs['y']));
         $reg->exec();
-        $testCoeff = array(-0.1533, 0.3764, 0.0012, 0.0227);
+        $testCoeff = new Matrix(array(
+            array(-0.1533), 
+            array(0.3764), 
+            array(0.0012), 
+            array(0.0227),
+        ));
         $this->assertEquals($testCoeff, $reg->getCoefficients(), '', .01);
+        //Test predictions
+        $correctPred = new Matrix(array(array(1.40379)));
+        $pred = $reg->predict(new Matrix(array(array(1.2,864,2))));
+        $this->assertEquals($correctPred, $pred, '', 0.0001);
+        //Test multiple predictions at once
+        $correctPreds = new Matrix(array(
+            array(1.40379), 
+            array(1.65637),
+        ));
+        $preds = $reg->predict(new Matrix(array(
+            array(1.2,864,2),
+            array(1.78,818,6),
+        )));
+        $this->assertEquals($correctPreds, $preds, '', 0.0001);
+        //Test variance
         $testPredictionStandardErrors = array(
             0.0038498088711814,
             0.018299433470814,
@@ -149,7 +171,7 @@ class RegressionTest extends \PHPUnit_Framework_TestCase
             0.0094137632808407,
             0.020011163777876,
         );
-        $this->assertEquals($testPredictionStandardErrors, $reg->getPredictionVariance(), '', 0.01);
+        $this->assertEquals($testPredictionStandardErrors, $reg->computePredictionVariances(), '', 0.01);
     }
 
     /**
@@ -188,8 +210,8 @@ class RegressionTest extends \PHPUnit_Framework_TestCase
 
         /* @var $reg Regression */
         $reg = new Regression();
-        $reg->setX($x);
-        $reg->setY($y);
+        $reg->setX(new Matrix($x));
+        $reg->setY(new Matrix($y));
         $reg->exec();    //go!
         //all our expected values for the above dataset.
         $testSSEScalar = 447.808;
@@ -197,7 +219,11 @@ class RegressionTest extends \PHPUnit_Framework_TestCase
         $testSSTOScalar = 1896.025;
         $testRsquare = 0.76381;
         $testF = 11.3190;
-        $testCoeff = array(1.564, 0.3787, 0.5747);
+        $testCoeff = new Matrix(array(
+            array(1.564), 
+            array(0.3787), 
+            array(0.5747),
+            ));
         $testStdErr = array(3.4901, 0.3279, 0.34303);
         $testTstats = array(0.4483, 1.1546, 1.6754);
         $testPValues = array(0.6674, 0.2861, 0.1377);
@@ -212,6 +238,51 @@ class RegressionTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($testStdErr, $reg->getStandardError(), '', .01);
         $this->assertEquals($testTstats, $reg->getTStats(), '', .01);
         $this->assertEquals($testPValues, $reg->getPValues(), '', .01);
+    }
+    
+    /**
+     * @expectedException Regression\RegressionException
+     */
+    public function testPredictionException()
+    {
+        $x = array(
+            array(8, 2),
+            array(40.5, 24.5),
+            array(4.5, .5),
+            array(.5, 2),
+            array(4.5, 4.5),
+            array(7, 8),
+            array(24.5, 40.5),
+            array(4.5, 2),
+            array(32, 24.5),
+            array(.5, 4.5),
+        );
+        //dependent matrix..note it is a 2d array
+        $y = array(array(4.5),
+            array(22.5),
+            array(2),
+            array(.5),
+            array(18),
+            array(2),
+            array(32),
+            array(4.5),
+            array(40.5),
+            array(2));
+        $reg = new Regression();
+        $reg->setX(new Matrix($x));
+        $reg->setY(new Matrix($y));
+        $reg->predict(new Matrix(array(array(3, 4))));
+        
+    }
+    
+    /**
+     * @expectedException Regression\RegressionException
+     */
+    public function testExecException()
+    {
+        $reg = new Regression();
+        $reg->exec();
+        
     }
 
 }

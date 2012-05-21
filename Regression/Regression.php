@@ -37,35 +37,38 @@ use Carbocation\StatisticsBundle\Regression\RegressionException;
 class Regression
 {
 
-    protected $SSEScalar; //sum of squares due to error
-    protected $SSRScalar; //sum of squares due to regression
-    protected $SSTOScalar; //Total sum of squares
-    protected $RSquare;         //R square
-    protected $F;               //F statistic
-    protected $coefficients;    //regression coefficients array
-    protected $stderrors;    //standard errror array
-    protected $tstats;     //t statistics array
-    protected $pvalues;     //p values array
-    protected $covariance; //covariance matrix
-    protected $x = array();
-    protected $y = array();
+    protected $SSEScalar;           //sum of squares due to error
+    protected $SSRScalar;           //sum of squares due to regression
+    protected $SSTOScalar;          //Total sum of squares
+    protected $RSquare;             //R square
+    protected $F;                   //F statistic
+    protected $stderrors = array(); //standard errror array
+    protected $tstats = array();    //t statistics array
+    protected $pvalues = array();   //p values array
+    protected $coefficients;        //regression coefficients Matrix object
+    protected $covariance;          //covariance Matrix object
+    protected $x;                   //Matrix object holding independent vars
+    protected $y;                   //Matrix object holding dependent vars
     
     /*
      * Prepend a column of 1s to the matrix of independent variables?
      */
     protected $generateIntercept = true;
     
-    public function setX(array $x)
+    public function setX(Matrix $x)
     {
         if($this->generateIntercept){
-            foreach($x AS $row => $element){
-                array_unshift($x[$row], 1);
-            }
+            $x = $this->generateInterceptColumn($x);
         }
         $this->x = $x;
     }
+    
+    public function generateInterceptColumn(Matrix $m)
+    {
+        return $m->addColumn(array_fill(0, $m->getNumRows(), 1), 0);
+    }
 
-    public function setY($y)
+    public function setY(Matrix $y)
     {
         $this->y = $y;
     }
@@ -117,31 +120,29 @@ class Regression
 
     public function exec()
     {
-        if((count($this->x) == 0) || (count($this->y) == 0)){
-            throw new RegressionException('Please supply valid X and Y arrays');
+        if(!($this->x instanceof Matrix)
+                || !($this->y instanceof Matrix)){
+            throw new RegressionException('X and Y must be matrices.');
         }
-        $mX = new Matrix($this->x);
-        $mY = new Matrix($this->y);
-        
         //(X'X)-1
-        $XtXPrime = $mX->transpose()->multiply($mX)->invert();
+        $XtXPrime = $this->x->transpose()->multiply($this->x)->invert();
         
         //X'Y
-        $XtY = $mX->transpose()->multiply($mY);
+        $XtY = $this->x->transpose()->multiply($this->y);
         
         //coefficients = b = (X'X)-1 X'Y 
         $coeff = $XtXPrime->multiply($XtY);
         
         //Generate predictions
         // Xb
-        $mPredictions = $mX->multiply($coeff);
+        $mPredictions = $this->x->multiply($coeff);
         
         //Generate b'X'Y, which we will reuse
         // b'X'Y = (Xb)'Y = (predictions)'Y
-        $btXtY = $mPredictions->transpose()->multiply($mY);
+        $btXtY = $mPredictions->transpose()->multiply($this->y);
         
-        $num_independent = $mX->getNumColumns();   //note: intercept is included
-        $sample_size = $mX->getNumRows();
+        $num_independent = $this->x->getNumColumns();   //note: intercept is included
+        $sample_size = $this->x->getNumRows();
         $dfTotal = $sample_size - 1;
         $dfModel = $num_independent - 1;
         $dfResidual = $dfTotal - $dfModel;
@@ -154,17 +155,17 @@ class Regression
         //SSR = b'X'Y - (Y'U(U')Y)/n
         $this->SSRScalar = $btXtY
                 ->subtract(
-                        $mY->transpose()
+                        $this->y->transpose()
                         ->multiply($um)
                         ->multiply($um->transpose())
-                        ->multiply($mY)
+                        ->multiply($this->y)
                         ->scalarDivide($sample_size))
                 ->getEntry(0, 0);
         
         //SSE = Y'Y - b'X'Y
-        $this->SSEScalar = $mY
+        $this->SSEScalar = $this->y
                 ->transpose()
-                ->multiply($mY)
+                ->multiply($this->y)
                 ->subtract($btXtY)
                 ->getEntry(0, 0);
 
@@ -185,27 +186,40 @@ class Regression
             $pvalue[] = array($this->getStudentPValue($tstat[$i][0], $dfResidual));
             
             //convert into 1-d vectors and store
-            $this->coefficients[] = $coeff->getEntry($i, 0);
             $this->stderrors[] = $searray[$i][0];
             $this->tstats[] = $tstat[$i][0];
             $this->pvalues[] = $pvalue[$i][0];
         }
+        //$this->coefficients = new Matrix(array($coefficients));
+        $this->coefficients = $coeff;
+    }
+    
+    public function predict(Matrix $m)
+    {
+        if(!($this->coefficients instanceof Matrix)){
+            throw new RegressionException('Must run exec before calling predict');
+        }
+        
+        $m = $this->generateInterceptColumn($m);
+        return $m->multiply($this->coefficients);
     }
     
     /**
-     * Calculate the standard error for each predicted observation, 
+     * Calculate the standard error for each observation in the training dataset,
      * given the covariance matrix.
      * 
-     * @return array One row per observation 
+     * @return array One row per observation in the training data set
      */
-    public function getPredictionVariance()
+    public function computePredictionVariances()
     {
         $predictionVariances = array();
         
         $unitCol = new Matrix(array_fill(0, $this->covariance->getNumColumns(), array(1)));
         $unitRow = new Matrix(array_fill(0, $this->covariance->getNumRows(), array(1)));
         
-        foreach($this->x AS $k => $v){
+        $independentVariables = $this->x->getData();
+        
+        foreach($independentVariables AS $k => $v){
             $currentRowX = new Matrix(array($v));
             
             //Multiply the elements of the covariance matrix by the square of 

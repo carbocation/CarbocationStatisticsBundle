@@ -2,6 +2,7 @@
 
 require dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'bootstrap.php';
 
+use Carbocation\StatisticsBundle\Regression\Matrix;
 use Carbocation\StatisticsBundle\Regression\Regression;
 
 $predictors = array(
@@ -37,8 +38,8 @@ $predicted = array(
 );
 
 $regression = new Regression();
-$regression->setX($predictors);
-$regression->setY($predicted);
+$regression->setX(new Matrix($predictors));
+$regression->setY(new Matrix($predicted));
 $regression->exec();
 
 echo "Coefficients:" . PHP_EOL;

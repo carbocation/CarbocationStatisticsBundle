@@ -1,0 +1,6 @@
+{
+    "name": "carbocation/statistics-bundle",
+    "require": {
+        "php": ">=5.3.0"
+    }
+}
